@@ -10,15 +10,16 @@ const mongoose = require('mongoose');
 const flash = require('connect-flash');
 const passport = require('passport');
 
+
 const container = require('./container');
 
 
 
-container.resolve(function(users) {
+container.resolve(function(users, _) {
 
   //path of database
-    mongoose.Promise = global.Promise;
-    mongoose.connect('mongodb://localhost/socketIO', {useMongoClient: true});
+  mongoose.Promise = global.Promise;
+  mongoose.connect('mongodb://localhost/footballkik', {useMongoClient: true});
 
   const app = SetupExpress();
 
@@ -30,7 +31,7 @@ container.resolve(function(users) {
       });
       ConfigureExpress(app);
 
-      //Setup router for user.js
+      //Setup router users.js
       const router = require('express-promise-router')();
       users.SetRouting(router);
 
@@ -40,6 +41,8 @@ container.resolve(function(users) {
 
 
     function ConfigureExpress(app){
+      require('./passport/passport-local');
+
         app.use(express.static('public'));
         app.use(cookieParser());
         app.set('view engine', 'ejs');
@@ -47,18 +50,20 @@ container.resolve(function(users) {
         app.use(bodyParser.urlencoded({extended: true}));
 
         //database validation, session, Store
-       app.use(validator());
-               app.use(session({
-           secret: 'thisisasecretkey',
-           resave: true,
-           saveInitialized: true,
-           store: new MongoStore({mongooseConnection: mongoose.connection})
-         }));
+        app.use(validator());
+        app.use(session({
+            secret: 'addyourownsecretkey',
+            resave: false,
+            saveUninitialized: false,
+            store: new MongoStore({mongooseConnection: mongoose.connection})
+        }));
 
-           app.use(flash());
+        app.use(flash());
 
-           //passport initialize and session
-           app.use(passport.initialize());
-           app.use(passport.session());
+        //passport initialize and session
+        app.use(passport.initialize());
+        app.use(passport.session());
+
+        app.locals._ = _;
     }
 });
